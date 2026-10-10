@@ -34,9 +34,12 @@ class Spec:
     clamp_rib_height: float = 7.0
 
     # Layer 3: Topper
-    topper_thickness: float = 5.0
-    topper_size_x: float = 70.0
-    topper_size_y: float = 70.0
+    topper_general_thickness: float = 15.0
+    topper_size_x: float = 66.0
+    topper_size_y: float = 76.0
+
+    topper_channel_width: float = 15.0  # TODO check
+    topper_channel_thickness: float = 5.0
 
     def __post_init__(self) -> None:
         """Post initialization checks."""
@@ -127,16 +130,49 @@ def clamp_plate(spec: Spec) -> bd.Part | bd.Compound:
     return p
 
 
-# TODO: Add topper part!!
+def topper_plate(spec: Spec) -> bd.Part | bd.Compound:
+    """Create a CAD model of topper_plate."""
+    p = bd.Part(None)
+
+    p += bd.Box(
+        spec.topper_size_x,
+        spec.topper_size_y,
+        spec.topper_general_thickness,
+        align=bde.align.ANCHOR_BOTTOM,
+    )
+
+    # Remove the channel (along Y-axis) for antenna.
+    p -= bd.Box(
+        spec.topper_channel_width,
+        spec.topper_size_y,
+        spec.topper_general_thickness - spec.topper_channel_thickness,
+        align=bde.align.ANCHOR_BOTTOM,
+    )
+
+    # Remove the screw holes.
+    for x in (-1, 1):
+        for y in (-1, 1):
+            p -= bd.Pos(
+                X=x * spec.base_screw_sep_x / 2,
+                Y=y * spec.base_screw_sep_y / 2,
+            ) * bd.Cylinder(
+                radius=spec.screw_od / 2,
+                height=spec.topper_general_thickness,
+                align=bde.align.ANCHOR_BOTTOM,
+            )
+
+    return p
 
 
 def assembly(spec: Spec) -> bd.Part | bd.Compound:
     """Create a CAD model of the waterproofing frame assembly."""
     p = bd.Part(None)
 
-    p += base_plate(spec)
+    p += bd.Pos(Z=0) * base_plate(spec)
 
     p += bd.Pos(Z=35) * clamp_plate(spec)
+
+    p += bd.Pos(Z=70) * topper_plate(spec)
 
     return p
 
@@ -145,6 +181,7 @@ if __name__ == "__main__":
     parts = {
         "base_plate": show(base_plate(Spec())),
         "clamp_plate": show(clamp_plate(Spec())),
+        "topper_plate": show(topper_plate(Spec())),
         "assembly": show(assembly(Spec())),
     }
 
