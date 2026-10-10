@@ -29,6 +29,7 @@ class Spec:
     base_to_clamp_radial_gap: float = 3.0
 
     clamp_rib_width: float = 5.0
+    clamp_rib_height: float = 7.0
 
     def __post_init__(self) -> None:
         """Post initialization checks."""
@@ -99,7 +100,7 @@ def clamp_plate(spec: Spec) -> bd.Part | bd.Compound:
             * bd.Box(
                 spec.clamp_plate_od - spec.clamp_plate_vertical_wall_t,
                 spec.clamp_rib_width,
-                spec.base_clamp_overlap_axial,
+                spec.clamp_rib_height,
                 align=bde.align.ANCHOR_BOTTOM,
             )
         )
