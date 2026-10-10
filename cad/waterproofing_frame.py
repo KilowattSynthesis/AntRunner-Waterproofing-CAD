@@ -28,6 +28,8 @@ class Spec:
 
     base_to_clamp_radial_gap: float = 3.0
 
+    clamp_rib_width: float = 5.0
+
     def __post_init__(self) -> None:
         """Post initialization checks."""
         assert True
@@ -88,6 +90,19 @@ def clamp_plate(spec: Spec) -> bd.Part | bd.Compound:
         height=spec.base_clamp_overlap_axial,
         align=bde.align.ANCHOR_BOTTOM,
     )
+
+    # Add structural ribs to the clamp plate. X-shape.
+    for rot_z in (30, -30, 90):
+        p += (
+            bd.Rot(Z=rot_z)
+            * bd.Pos(Z=spec.clamp_plate_thickness)
+            * bd.Box(
+                spec.clamp_plate_od - spec.clamp_plate_vertical_wall_t,
+                spec.clamp_rib_width,
+                spec.base_clamp_overlap_axial,
+                align=bde.align.ANCHOR_BOTTOM,
+            )
+        )
 
     # Remove the screw holes.
     for x in (-1, 1):
