@@ -20,20 +20,25 @@ class Spec:
 
     base_plate_thickness: float = 5.0
 
-    base_plate_vertical_wall_t: float = 8.0
-
     base_relief_screw_sep_x: float = 60.0
     base_relief_screw_sep_y: float = 23.5
     base_relief_screw_depth: float = 2.8
     base_relief_screw_od: float = 8.0
 
     # Layer 1 to 2 Config
-    base_clamp_overlap_axial: float = 10.0
-    base_to_clamp_radial_gap: float = 3.0
+    # Wavy (labyrinth) fabric clamp between base and clamp.
+    # Ridges alternate clamp/base/clamp/... going inward from the outside.
+    # Outermost clamp ridge is a skirt around the outside of the base OD.
+    # Next ridge in is the base's outer rim.
+    fabric_gap: float = 4.0  # Fabric is 4-5mm thick. Slightly compressed.
+    wave_depth: float = 5.0
+    wave_ridge_width: float = 5.0
+    wave_ridge_count: int = 5
 
     # Layer 2: Clamp
     clamp_plate_thickness: float = 5.0
     clamp_plate_vertical_wall_t: float = 8.0
+    clamp_plate_wall_height: float = 10.0
 
     clamp_rib_width: float = 5.0
     clamp_rib_height: float = 7.0
@@ -49,16 +54,53 @@ class Spec:
 
     def __post_init__(self) -> None:
         """Post initialization checks."""
-        assert True
+        assert self.wave_ridge_count % 2 == 1, "Must start/end on clamp."
+        innermost_ridge_r = self.wave_ridges[-1][1]
+        assert innermost_ridge_r > 0
 
     @property
     def clamp_plate_od(self) -> float:
         """Outer diameter of clamp plate."""
-        return (
-            self.base_od
-            - 2 * self.base_plate_vertical_wall_t
-            - 2 * self.base_to_clamp_radial_gap
+        return 2 * self.wave_ridges[0][0]
+
+    @property
+    def clamp_skirt_extra_depth(self) -> float:
+        """Skirt length below the other clamp ridges.
+
+        Makes the skirt bottom flush with the base bottom.
+        """
+        return self.base_plate_thickness + self.fabric_gap
+
+    @property
+    def wave_ridges(self) -> list[tuple[float, float, str]]:
+        """List of (r_outer, r_inner, owner) for each wave ridge.
+
+        Owner is "clamp" (ridge points down) or "base" (ridge points up).
+        Ordered from outside to inside.
+        """
+        ridges: list[tuple[float, float, str]] = []
+        r_outer = self.base_od / 2 + self.fabric_gap + self.wave_ridge_width
+        for i in range(self.wave_ridge_count):
+            owner = "clamp" if i % 2 == 0 else "base"
+            r_inner = r_outer - self.wave_ridge_width
+            ridges.append((r_outer, r_inner, owner))
+            r_outer = r_inner - self.fabric_gap
+        return ridges
+
+
+def _ring(
+    r_outer: float, r_inner: float, height: float
+) -> bd.Part | bd.Compound:
+    """Create an annular ring, anchored at the bottom."""
+    return (
+        bd.Part(None)
+        + bd.Cylinder(
+            radius=r_outer, height=height, align=bde.align.ANCHOR_BOTTOM
         )
+        - bd.Cylinder(
+            radius=r_inner, height=height, align=bde.align.ANCHOR_BOTTOM
+        )
+    )
 
 
 def base_plate(spec: Spec) -> bd.Part | bd.Compound:
@@ -67,15 +109,16 @@ def base_plate(spec: Spec) -> bd.Part | bd.Compound:
 
     p += bd.Cylinder(
         radius=spec.base_od / 2,
-        height=spec.base_plate_thickness + spec.base_clamp_overlap_axial,
+        height=spec.base_plate_thickness,
         align=bde.align.ANCHOR_BOTTOM,
     )
 
-    p -= bd.Pos(Z=spec.base_plate_thickness) * bd.Cylinder(
-        radius=spec.base_od / 2 - spec.base_plate_vertical_wall_t,
-        height=spec.base_clamp_overlap_axial,
-        align=bde.align.ANCHOR_BOTTOM,
-    )
+    # Add the upward-pointing wave ridges (outermost is the outer rim).
+    for r_outer, r_inner, owner in spec.wave_ridges:
+        if owner == "base":
+            p += bd.Pos(Z=spec.base_plate_thickness) * _ring(
+                r_outer, r_inner, spec.wave_depth
+            )
 
     # Remove the screw holes.
     for x in (-1, 1):
@@ -108,15 +151,20 @@ def clamp_plate(spec: Spec) -> bd.Part | bd.Compound:
     """Create a CAD model of clamp_plate."""
     p = bd.Part(None)
 
-    p += bd.Cylinder(
+    # Z where the (non-skirt) ridges start, and where the body starts.
+    ridge_z = spec.clamp_skirt_extra_depth
+    body_z = ridge_z + spec.wave_depth
+
+    # Body sits above the downward-pointing wave ridges.
+    p += bd.Pos(Z=body_z) * bd.Cylinder(
         radius=spec.clamp_plate_od / 2,
-        height=spec.clamp_plate_thickness + spec.base_clamp_overlap_axial,
+        height=spec.clamp_plate_thickness + spec.clamp_plate_wall_height,
         align=bde.align.ANCHOR_BOTTOM,
     )
 
-    p -= bd.Pos(Z=spec.clamp_plate_thickness) * bd.Cylinder(
+    p -= bd.Pos(Z=body_z + spec.clamp_plate_thickness) * bd.Cylinder(
         radius=spec.clamp_plate_od / 2 - spec.clamp_plate_vertical_wall_t,
-        height=spec.base_clamp_overlap_axial,
+        height=spec.clamp_plate_wall_height,
         align=bde.align.ANCHOR_BOTTOM,
     )
 
@@ -124,7 +172,7 @@ def clamp_plate(spec: Spec) -> bd.Part | bd.Compound:
     for rot_z in (30, -30, 90):
         p += (
             bd.Rot(Z=rot_z)
-            * bd.Pos(Z=spec.clamp_plate_thickness)
+            * bd.Pos(Z=body_z + spec.clamp_plate_thickness)
             * bd.Box(
                 spec.clamp_plate_od - spec.clamp_plate_vertical_wall_t,
                 spec.clamp_rib_width,
@@ -132,6 +180,14 @@ def clamp_plate(spec: Spec) -> bd.Part | bd.Compound:
                 align=bde.align.ANCHOR_BOTTOM,
             )
         )
+
+    # Add the downward-pointing wave ridges. First one is the outer skirt.
+    for i, (r_outer, r_inner, owner) in enumerate(spec.wave_ridges):
+        if owner == "clamp":
+            extra = spec.clamp_skirt_extra_depth if i == 0 else 0
+            p += bd.Pos(Z=ridge_z - extra) * _ring(
+                r_outer, r_inner, spec.wave_depth + extra
+            )
 
     # Remove the screw holes.
     for x in (-1, 1):
@@ -141,7 +197,7 @@ def clamp_plate(spec: Spec) -> bd.Part | bd.Compound:
                 Y=y * spec.base_screw_sep_y / 2,
             ) * bd.Cylinder(
                 radius=spec.screw_od / 2,
-                height=spec.base_plate_thickness,
+                height=body_z + spec.clamp_plate_thickness,
                 align=bde.align.ANCHOR_BOTTOM,
             )
 
