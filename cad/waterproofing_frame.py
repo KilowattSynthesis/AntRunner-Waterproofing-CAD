@@ -43,6 +43,9 @@ class Spec:
     # Layer 2: Clamp
     clamp_plate_thickness: float = 5.0
 
+    # Nominally could be: self.base_plate_thickness + self.fabric_gap
+    clamp_skirt_extra_depth: float = 7.0
+
     # Layer 3: Topper
     topper_general_thickness: float = 15.0
     topper_size_x: float = 45.0 + 16.0
@@ -65,14 +68,6 @@ class Spec:
     def clamp_plate_od(self) -> float:
         """Outer diameter of clamp plate."""
         return 2 * self.wave_ridges[0][0]
-
-    @property
-    def clamp_skirt_extra_depth(self) -> float:
-        """Skirt length below the other clamp ridges.
-
-        Makes the skirt bottom flush with the base bottom.
-        """
-        return self.base_plate_thickness + self.fabric_gap
 
     @property
     def wave_ridges(self) -> list[tuple[float, float, str]]:
