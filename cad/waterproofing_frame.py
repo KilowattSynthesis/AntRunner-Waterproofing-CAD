@@ -37,11 +37,6 @@ class Spec:
 
     # Layer 2: Clamp
     clamp_plate_thickness: float = 5.0
-    clamp_plate_vertical_wall_t: float = 8.0
-    clamp_plate_wall_height: float = 10.0
-
-    clamp_rib_width: float = 5.0
-    clamp_rib_height: float = 7.0
 
     # Layer 3: Topper
     topper_general_thickness: float = 15.0
@@ -155,31 +150,12 @@ def clamp_plate(spec: Spec) -> bd.Part | bd.Compound:
     ridge_z = spec.clamp_skirt_extra_depth
     body_z = ridge_z + spec.wave_depth
 
-    # Body sits above the downward-pointing wave ridges.
+    # Body sits above the downward-pointing wave ridges. Smooth top.
     p += bd.Pos(Z=body_z) * bd.Cylinder(
         radius=spec.clamp_plate_od / 2,
-        height=spec.clamp_plate_thickness + spec.clamp_plate_wall_height,
+        height=spec.clamp_plate_thickness,
         align=bde.align.ANCHOR_BOTTOM,
     )
-
-    p -= bd.Pos(Z=body_z + spec.clamp_plate_thickness) * bd.Cylinder(
-        radius=spec.clamp_plate_od / 2 - spec.clamp_plate_vertical_wall_t,
-        height=spec.clamp_plate_wall_height,
-        align=bde.align.ANCHOR_BOTTOM,
-    )
-
-    # Add structural ribs to the clamp plate. X-shape.
-    for rot_z in (30, -30, 90):
-        p += (
-            bd.Rot(Z=rot_z)
-            * bd.Pos(Z=body_z + spec.clamp_plate_thickness)
-            * bd.Box(
-                spec.clamp_plate_od - spec.clamp_plate_vertical_wall_t,
-                spec.clamp_rib_width,
-                spec.clamp_rib_height,
-                align=bde.align.ANCHOR_BOTTOM,
-            )
-        )
 
     # Add the downward-pointing wave ridges. First one is the outer skirt.
     for i, (r_outer, r_inner, owner) in enumerate(spec.wave_ridges):
