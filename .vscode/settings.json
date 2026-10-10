@@ -16,5 +16,6 @@
         "editor.insertSpaces": true,
         "editor.tabSize": 2
     },
-    "python.languageServer": "Pylance"
+    "python.languageServer": "Pylance",
+    "python-envs.defaultEnvManager": "ms-python.python:system"
 }
