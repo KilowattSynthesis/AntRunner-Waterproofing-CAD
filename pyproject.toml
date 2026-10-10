@@ -1,6 +1,7 @@
 [project]
 name = "cad"
 version = "0.1.0"
+description = "Waterproofing the AntRunner antenna rotator (3D printed frame to hold waterproof fabric)"
 dependencies = [
     "loguru",
     "GitPython",
