@@ -11,25 +11,32 @@ from loguru import logger
 class Spec:
     """Specification for waterproofing frame."""
 
-    main_od: float = 210.0
+    screw_od: float = 5.2
 
+    # Layer 1: Base
+    base_od: float = 210.0
     base_screw_sep_x: float = 45.0  # Flexible (slots on main).
     base_screw_sep_y: float = 60.0
 
-    screw_od: float = 5.2
-
     base_plate_thickness: float = 5.0
-    clamp_plate_thickness: float = 5.0
 
     base_plate_vertical_wall_t: float = 8.0
-    clamp_plate_vertical_wall_t: float = 8.0
 
+    # Layer 1 to 2 Config
     base_clamp_overlap_axial: float = 10.0
-
     base_to_clamp_radial_gap: float = 3.0
+
+    # Layer 2: Clamp
+    clamp_plate_thickness: float = 5.0
+    clamp_plate_vertical_wall_t: float = 8.0
 
     clamp_rib_width: float = 5.0
     clamp_rib_height: float = 7.0
+
+    # Layer 3: Topper
+    topper_thickness: float = 5.0
+    topper_size_x: float = 70.0
+    topper_size_y: float = 70.0
 
     def __post_init__(self) -> None:
         """Post initialization checks."""
@@ -39,7 +46,7 @@ class Spec:
     def clamp_plate_od(self) -> float:
         """Outer diameter of clamp plate."""
         return (
-            self.main_od
+            self.base_od
             - 2 * self.base_plate_vertical_wall_t
             - 2 * self.base_to_clamp_radial_gap
         )
@@ -50,13 +57,13 @@ def base_plate(spec: Spec) -> bd.Part | bd.Compound:
     p = bd.Part(None)
 
     p += bd.Cylinder(
-        radius=spec.main_od / 2,
+        radius=spec.base_od / 2,
         height=spec.base_plate_thickness + spec.base_clamp_overlap_axial,
         align=bde.align.ANCHOR_BOTTOM,
     )
 
     p -= bd.Pos(Z=spec.base_plate_thickness) * bd.Cylinder(
-        radius=spec.main_od / 2 - spec.base_plate_vertical_wall_t,
+        radius=spec.base_od / 2 - spec.base_plate_vertical_wall_t,
         height=spec.base_clamp_overlap_axial,
         align=bde.align.ANCHOR_BOTTOM,
     )
@@ -118,6 +125,9 @@ def clamp_plate(spec: Spec) -> bd.Part | bd.Compound:
             )
 
     return p
+
+
+# TODO: Add topper part!!
 
 
 def assembly(spec: Spec) -> bd.Part | bd.Compound:
