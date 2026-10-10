@@ -14,7 +14,7 @@ class Spec:
     screw_od: float = 5.2
 
     # Layer 1: Base
-    base_od: float = 210.0
+    base_od: float = 180.0
     base_screw_sep_x: float = 45.0  # Flexible (slots on main).
     base_screw_sep_y: float = 60.0
 
@@ -57,6 +57,9 @@ class Spec:
         assert self.wave_ridge_count % 2 == 1, "Must start/end on clamp."
         innermost_ridge_r = self.wave_ridges[-1][1]
         assert innermost_ridge_r > 0
+
+        logger.info(f"Base Plate OD: {self.base_od:.1f} mm")
+        logger.info(f"Clamp Plate OD: {self.clamp_plate_od:.1f} mm")
 
     @property
     def clamp_plate_od(self) -> float:
