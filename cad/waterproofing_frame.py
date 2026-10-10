@@ -42,6 +42,7 @@ class Spec:
     topper_general_thickness: float = 15.0
     topper_size_x: float = 45.0 + 16.0
     topper_size_y: float = 60.0 + 16.0
+    topper_corner_fillet_radius: float = 5.0
 
     topper_channel_width: float = 15.0 + 0.5  # Measured 15mm.
     topper_channel_thickness: float = 5.0
@@ -156,6 +157,12 @@ def topper_plate(spec: Spec) -> bd.Part | bd.Compound:
         spec.topper_size_y,
         spec.topper_general_thickness,
         align=bde.align.ANCHOR_BOTTOM,
+    )
+
+    # Fillet the vertical (Z-axis) corners.
+    p = bd.fillet(
+        p.edges().filter_by(bd.Axis.Z),
+        radius=spec.topper_corner_fillet_radius,
     )
 
     # Remove the channel (along Y-axis) for antenna.
