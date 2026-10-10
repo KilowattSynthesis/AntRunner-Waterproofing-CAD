@@ -235,16 +235,20 @@ def topper_plate(spec: Spec) -> bd.Part | bd.Compound:
 
 
 def assembly(spec: Spec) -> bd.Part | bd.Compound:
-    """Create a CAD model of the waterproofing frame assembly."""
-    p = bd.Part(None)
+    """Create a CAD model of the waterproofing frame assembly.
 
-    p += bd.Pos(Z=0) * base_plate(spec)
+    Each layer is a separate labeled child (shows up by name in viewers/STEP).
+    """
+    base = bd.Pos(Z=0) * base_plate(spec)
+    base.label = "base_plate"
 
-    p += bd.Pos(Z=35) * clamp_plate(spec)
+    clamp = bd.Pos(Z=35) * clamp_plate(spec)
+    clamp.label = "clamp_plate"
 
-    p += bd.Pos(Z=70) * topper_plate(spec)
+    topper = bd.Pos(Z=70) * topper_plate(spec)
+    topper.label = "topper_plate"
 
-    return p
+    return bd.Compound(label="assembly", children=[base, clamp, topper])
 
 
 if __name__ == "__main__":
