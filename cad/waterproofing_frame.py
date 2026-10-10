@@ -43,7 +43,7 @@ class Spec:
     topper_size_x: float = 45.0 + 16.0
     topper_size_y: float = 60.0 + 16.0
 
-    topper_channel_width: float = 15.0  # TODO check
+    topper_channel_width: float = 15.0 + 0.5  # Measured 15mm.
     topper_channel_thickness: float = 5.0
 
     def __post_init__(self) -> None:
