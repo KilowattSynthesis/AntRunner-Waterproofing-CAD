@@ -25,6 +25,11 @@ class Spec:
     base_relief_screw_depth: float = 2.8
     base_relief_screw_od: float = 8.0
 
+    zip_tie_width: float = 12.0
+    zip_tie_height: float = 3.8
+    zip_tie_channel_length: float = 100.0
+    zip_tie_sep_x: float = 45.0  # Matches base screw spacing.
+
     # Layer 1 to 2 Config
     # Wavy (labyrinth) fabric clamp between base and clamp.
     # Ridges alternate clamp/base/clamp/... going inward from the outside.
@@ -138,6 +143,15 @@ def base_plate(spec: Spec) -> bd.Part | bd.Compound:
                 height=spec.base_relief_screw_depth,
                 align=bde.align.ANCHOR_BOTTOM,
             )
+
+    # Remove zip tie channels in Y axis.
+    for x in (-1, 1):
+        p -= bd.Pos(X=x * spec.zip_tie_sep_x / 2) * bd.Box(
+            spec.zip_tie_width,
+            spec.zip_tie_channel_length,
+            spec.zip_tie_height,
+            align=bde.align.ANCHOR_BOTTOM,
+        )
 
     return p
 
