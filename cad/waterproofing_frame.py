@@ -22,6 +22,11 @@ class Spec:
 
     base_plate_vertical_wall_t: float = 8.0
 
+    base_relief_screw_sep_x: float = 60.0
+    base_relief_screw_sep_y: float = 23.5
+    base_relief_screw_depth: float = 2.8
+    base_relief_screw_od: float = 8.0
+
     # Layer 1 to 2 Config
     base_clamp_overlap_axial: float = 10.0
     base_to_clamp_radial_gap: float = 3.0
@@ -35,8 +40,8 @@ class Spec:
 
     # Layer 3: Topper
     topper_general_thickness: float = 15.0
-    topper_size_x: float = 66.0
-    topper_size_y: float = 76.0
+    topper_size_x: float = 45.0 + 16.0
+    topper_size_y: float = 60.0 + 16.0
 
     topper_channel_width: float = 15.0  # TODO check
     topper_channel_thickness: float = 5.0
@@ -80,6 +85,18 @@ def base_plate(spec: Spec) -> bd.Part | bd.Compound:
             ) * bd.Cylinder(
                 radius=spec.screw_od / 2,
                 height=spec.base_plate_thickness,
+                align=bde.align.ANCHOR_BOTTOM,
+            )
+
+    # Remove the base relief screw holes.
+    for x in (-1, 1):
+        for y in (-1, 1):
+            p -= bd.Pos(
+                X=x * spec.base_relief_screw_sep_x / 2,
+                Y=y * spec.base_relief_screw_sep_y / 2,
+            ) * bd.Cylinder(
+                radius=spec.base_relief_screw_od / 2,
+                height=spec.base_relief_screw_depth,
                 align=bde.align.ANCHOR_BOTTOM,
             )
 
