@@ -64,6 +64,22 @@ class Spec:
         logger.info(f"Base Plate OD: {self.base_od:.1f} mm")
         logger.info(f"Clamp Plate OD: {self.clamp_plate_od:.1f} mm")
 
+        screw_length = (
+            self.base_plate_thickness
+            + self.wave_depth
+            + self.clamp_plate_thickness
+            + self.topper_general_thickness
+        )
+        logger.info(
+            f"Minimum screw length: {screw_length:.1f} mm + 15mm for safety"
+        )
+
+        fabric_ring_circumference = 3.14159 * self.base_od
+        logger.info(
+            f"Fabric ring: D={self.base_od:.1f} mm, "
+            f"circumference={fabric_ring_circumference / 10:.1f} cm"
+        )
+
     @property
     def clamp_plate_od(self) -> float:
         """Outer diameter of clamp plate."""
