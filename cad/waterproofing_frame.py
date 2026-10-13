@@ -52,7 +52,7 @@ class Spec:
     topper_size_y: float = 60.0 + 16.0
     topper_corner_fillet_radius: float = 5.0
 
-    topper_channel_width: float = 15.0 + 0.5  # Measured 15mm.
+    topper_channel_width: float = 15.0 + 0.5  # Measured 15mm x 15mm on 9 dBi.
     topper_channel_thickness: float = 5.0
 
     def __post_init__(self) -> None:
